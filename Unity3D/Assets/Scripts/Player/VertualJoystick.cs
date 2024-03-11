@@ -5,6 +5,8 @@ using UnityEngine.EventSystems; // 키보드, 마우스, 터치를 이벤트로 오브젝트에 보
 
 public class VertualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
 {
+    public static VertualJoystick instance;
+
     private RectTransform   rectBG;
     [SerializeField]
     private RectTransform   rectIN;
@@ -12,16 +14,22 @@ public class VertualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler,
     private Transform       transformPlayer;
     private float           radius;
     [SerializeField]
-    private float           speed;
+    public float            speed;
     private float           Sqr = 0f;
 
     private Vector3 vecMove;
     private Vector2 vecNormal;
 
-    private bool isTouch = false;
+    public bool isTouch = false;
+    public bool isDodge = false;
 
     private void Awake()
     {
+        if(instance == null)
+        {
+            instance = this;
+        }
+
         rectBG = GetComponent<RectTransform>();
 
         transformPlayer = GameObject.Find("Player").transform;
@@ -68,7 +76,6 @@ public class VertualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler,
         // 동작중일 때 
         if(isTouch)
         {
-            Debug.Log("zzz");
             transformPlayer.position += vecMove;
         }
     }
