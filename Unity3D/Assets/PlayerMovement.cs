@@ -10,9 +10,6 @@ public class PlayerMovement : MonoBehaviour
     private float       rotateVel;
     private float       motionSmoothTime = 0.1f;
 
-    private bool isMoving = false;
-
-
     private NavMeshAgent    nav;
     private Animator        ani;
 
@@ -20,14 +17,17 @@ public class PlayerMovement : MonoBehaviour
     {
         nav = GetComponent<NavMeshAgent>();
         ani = GetComponent<Animator>();
-
-        nav.updateRotation = false;
     }
 
     private void Update()
     {
         Animation();
         Move();
+
+        if (transform.position == nav.destination)
+        {
+            Debug.Log("zzz");
+        }
     }
 
     public void Animation()
@@ -44,25 +44,24 @@ public class PlayerMovement : MonoBehaviour
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
 
-            if (Physics.Raycast(ray,out hit))
+            if (Physics.Raycast(ray,out hit,Mathf.Infinity))
             {
-                nav.SetDestination(hit.point);
-                isMoving = true;
+                if(hit.collider.tag == "Ground")
+                {
+                    // 움직임
+                    nav.SetDestination(hit.point);
+                    nav.stoppingDistance = 0;
+
+                    // 회전
+                    //Quaternion rotToLook = Quaternion.LookRotation(hit.point - transform.position);
+                    //float rotY = Mathf.SmoothDampAngle(transform.eulerAngles.y, rotToLook.eulerAngles.y,
+                    //                                   ref rotateVel, rotateSpeed * (Time.deltaTime * 5));
+                    //transform.eulerAngles = new Vector3(0, rotY, 0);
+
+                    
+                }
             }
         }
-
-        // 이동 중일 때만 회전
-        if (isMoving && !nav.pathPending && nav.remainingDistance > nav.stoppingDistance)
-        {
-            RotateToDestination();
-        }
-    }
-
-    void RotateToDestination()
-    {
-        Vector3 direction = (nav.destination - transform.position).normalized;
-        Quaternion lookRotation = Quaternion.LookRotation(direction);
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * nav.angularSpeed);
     }
 }
 
