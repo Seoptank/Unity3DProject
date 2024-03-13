@@ -53,10 +53,10 @@ public class PlayerMovement : MonoBehaviour
                     nav.stoppingDistance = 0;
 
                     // È¸Àü
-                    //Quaternion rotToLook = Quaternion.LookRotation(hit.point - transform.position);
-                    //float rotY = Mathf.SmoothDampAngle(transform.eulerAngles.y, rotToLook.eulerAngles.y,
-                    //                                   ref rotateVel, rotateSpeed * (Time.deltaTime * 5));
-                    //transform.eulerAngles = new Vector3(0, rotY, 0);
+                    Quaternion rotToLook = Quaternion.LookRotation(hit.point - transform.position);
+                    float rotY = Mathf.SmoothDampAngle(transform.eulerAngles.y, rotToLook.eulerAngles.y,
+                                                       ref rotateVel, rotateSpeed * (Time.deltaTime * 5));
+                    transform.eulerAngles = new Vector3(0, rotY, 0);
 
                     
                 }
