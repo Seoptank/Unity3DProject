@@ -4,10 +4,11 @@ using UnityEngine;
 
 public class FollowPlayer : MonoBehaviour
 {
-    private Transform   playerTransform;
-    private float       smooting = 0.2f;
     [SerializeField]
-    private Vector3     offset;
+    private Vector3     camOffset; 
+    private Transform   playerTransform;
+    private float       smooting = 0.2f;            // 부드러운 이동을 위한 값
+    private Vector3     velocity = Vector3.zero;    // SmoothDamp에 사용될 속도 값
 
     private void Awake()
     {
@@ -20,11 +21,11 @@ public class FollowPlayer : MonoBehaviour
             return;
         }
     }
-    private void Update()
+    private void FixedUpdate()
     {
-        // 플레이어를 부드럽게 따라가도록 수정
-        // transform.position = playerTransform.position + offset;
-        transform.position = Vector3.Lerp(transform.position, playerTransform.position + offset,smooting);
+        Vector3 targetPos = playerTransform.position + camOffset;
+
+        transform.position = Vector3.SmoothDamp(transform.position, targetPos, ref velocity, smooting);
     }
 
 }
