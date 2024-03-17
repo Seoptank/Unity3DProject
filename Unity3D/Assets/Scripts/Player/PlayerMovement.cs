@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AI;
 
+public enum PlayerState { Idle,Move,Attack}
 public class PlayerMovement : MonoBehaviour
 {
     [Header("공격")]
@@ -12,7 +12,11 @@ public class PlayerMovement : MonoBehaviour
     private float       rateTimeKunai;
     [SerializeField]
     private Transform   kunaiSpawnPoint;
+    private bool        isAttack;
     private PoolManager kunaiPoolManager;
+
+    [SerializeField]
+    private PlayerState curState;
 
     [Header("플레이어 스텟")]
     [SerializeField]
@@ -31,6 +35,7 @@ public class PlayerMovement : MonoBehaviour
         animator        = GetComponent<Animator>();
 
         StartCoroutine(FireKunai());
+        ChangeState(PlayerState.Idle);
     }
 
     private void OnApplicationQuit()
@@ -43,8 +48,16 @@ public class PlayerMovement : MonoBehaviour
         float x = virtualJoystick.Hor();
         float z = virtualJoystick.Ver();
 
-        // 플레이어 움직임/회전
-        MoveTo(x, z);
+        if(!isAttack)
+        {
+            // 플레이어 움직임/회전
+            MoveTo(x, z);
+
+            if (rigidbody.velocity.magnitude < 0.1f)
+            {
+                ChangeState(PlayerState.Idle);
+            }
+        }
 
         // 플레이어 애니메이션
         PlayerAni();
@@ -52,6 +65,8 @@ public class PlayerMovement : MonoBehaviour
 
     private void MoveTo(float x,float z)
     {
+        ChangeState(PlayerState.Move);
+
         // 플레이어 이동 방향 계산
         Vector3 moveDir = new Vector3(x, 0, z).normalized;
 
@@ -69,13 +84,20 @@ public class PlayerMovement : MonoBehaviour
 
     private void PlayerAni()
     {
-        if(virtualJoystick.isTouching)
+        switch (curState)
         {
-            animator.SetBool("IsWalk", true);
-        }
-        else
-        {
-            animator.SetBool("IsWalk", false);
+            case PlayerState.Idle:
+                break;
+                animator.SetBool("IsWalk", false);
+                animator.SetBool("IsAttack", false);
+            case PlayerState.Move:
+                animator.SetBool("IsWalk", true);
+                animator.SetBool("IsAttack", false);
+                break;
+            case PlayerState.Attack:
+                animator.SetBool("IsWalk", false);
+                animator.SetBool("IsAttack", true);
+                break;
         }
     }
 
@@ -83,12 +105,22 @@ public class PlayerMovement : MonoBehaviour
     {
         while(true)
         {
-            yield return new WaitForSeconds(rateTimeKunai);
+            isAttack = true;
+            ChangeState(PlayerState.Attack);
             GameObject kunai = kunaiPoolManager.ActivePoolItem();
             kunai.transform.position =  kunaiSpawnPoint.position;
             kunai.transform.rotation =  transform.rotation;
             kunai.GetComponent<RangedProjectile>().Setup(kunaiPoolManager);
+            kunai.GetComponent<Rigidbody>().velocity = kunaiSpawnPoint.forward * 50;
+            yield return new WaitForSeconds(0.5f);
+            isAttack = false;
+            yield return new WaitForSeconds(rateTimeKunai);
         }
+    }
+
+    private void ChangeState(PlayerState newState)
+    {
+        curState = newState;
     }
 }
 

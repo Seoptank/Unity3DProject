@@ -995,8 +995,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   prefabKunai: {fileID: 1852819981846148232, guid: 75775ec311135e44fae9f3d6b01d5b7a, type: 3}
-  rateTimeKunai: 3
+  rateTimeKunai: 1
   kunaiSpawnPoint: {fileID: 55303648}
+  curState: 0
   moveSpeed: 3
 --- !u!1 &1632017494
 GameObject:

@@ -27,8 +27,6 @@ public class RangedProjectile : MonoBehaviour
     private void Update()
     {
         float dis = Vector3.Distance(transform.position, startPos);
-
-        rigid.AddForce(transform.forward * speed);
     }
 
     private IEnumerator DeactivateThis()
