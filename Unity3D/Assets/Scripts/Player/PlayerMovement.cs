@@ -12,12 +12,11 @@ public class PlayerMovement : MonoBehaviour
     [Header("플레이어 y축 움직임 관련 변수")]
     [SerializeField]
     private float       jumpForce = 3.0f;
-    private float       gravity = -9.81f;   // 중력 계수
     [SerializeField]
     private float       groundOffset;
     [SerializeField]
     private LayerMask   layerGround;
-    private Vector3     velocity;
+    private float       gravity = -9.81f;   // 중력 계수
 
     private CharacterController characterController;
 
@@ -61,7 +60,7 @@ public class PlayerMovement : MonoBehaviour
     private bool isGropunded()
     {
         Vector3 spherePos = new Vector3(transform.position.x, transform.position.y - groundOffset, transform.position.z);
-        if (Physics.CheckSphere(spherePos, characterController.radius-0.05f, layerGround))
+        if (Physics.CheckSphere(spherePos, characterController.radius - 0.05f, layerGround))
             return true;
         return false;
     }
