@@ -2,125 +2,67 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum PlayerState { Idle,Move,Attack}
 public class PlayerMovement : MonoBehaviour
 {
-    [Header("공격")]
+    [Header("플레이어 x,z축 움직임 관련 변수")]
     [SerializeField]
-    private GameObject  prefabKunai;
-    [SerializeField]
-    private float       rateTimeKunai;
-    [SerializeField]
-    private Transform   kunaiSpawnPoint;
-    private bool        isAttack;
-    private PoolManager kunaiPoolManager;
+    private float       moveSpeed = 3.0f;   //  플레이어의 이동 속도
+    private Vector3     moveDir;            //  플레이어의 이동 방향
 
+    [Header("플레이어 y축 움직임 관련 변수")]
     [SerializeField]
-    private PlayerState curState;
-
-    [Header("플레이어 스텟")]
+    private float       jumpForce = 3.0f;
+    private float       gravity = -9.81f;   // 중력 계수
     [SerializeField]
-    private float           moveSpeed; // 플레이어 이동속도
+    private float       groundOffset;
+    [SerializeField]
+    private LayerMask   layerGround;
+    private Vector3     velocity;
 
-    private VirtualJoystick virtualJoystick;
-    private Rigidbody       rigidbody;
-    private Animator        animator;
+    private CharacterController characterController;
+
     private void Awake()
     {
-        kunaiPoolManager = new PoolManager(prefabKunai);
-
-        virtualJoystick = FindObjectOfType<VirtualJoystick>();
-
-        rigidbody       = GetComponent<Rigidbody>();
-        animator        = GetComponent<Animator>();
-
-        StartCoroutine(FireKunai());
-        ChangeState(PlayerState.Idle);
-    }
-
-    private void OnApplicationQuit()
-    {
-        kunaiPoolManager.DestroyObjcts();
+        characterController = GetComponent<CharacterController>();
     }
 
     private void FixedUpdate()
     {
-        float x = virtualJoystick.Hor();
-        float z = virtualJoystick.Ver();
-
-        if(!isAttack)
+        // 공중에 떠있는 상태
+        if (!isGropunded())
         {
-            // 플레이어 움직임/회전
-            MoveTo(x, z);
-
-            if (rigidbody.velocity.magnitude < 0.1f)
-            {
-                ChangeState(PlayerState.Idle);
-            }
+            // y축에 (중력계수 * deltatime) 를 더해 떨어지는 효과 발생
+            moveDir.y += gravity * Time.deltaTime;
+        }
+        else if (moveDir.y < 0)
+        {
+            moveDir.y = -2f;
         }
 
-        // 플레이어 애니메이션
-        PlayerAni();
+        // 플레이어의 실질적 이동
+        characterController.Move(moveDir * moveSpeed * Time.deltaTime);
     }
 
-    private void MoveTo(float x,float z)
+    public void MoveTo(Vector3 dir)
     {
-        ChangeState(PlayerState.Move);
+        // PlayerController에서 방향값을 입력받아 PlayerMovement의 moveDir변수에 전달하기 위한 함수
+        // moveDir의 y값은 본연의 y값을 받아와 중력을 적용
+        moveDir = new Vector3(dir.x, moveDir.y, dir.z);
+    }
 
-        // 플레이어 이동 방향 계산
-        Vector3 moveDir = new Vector3(x, 0, z).normalized;
-
-        // 방향으로 이동
-        rigidbody.MovePosition(rigidbody.position + (moveDir * moveSpeed * Time.deltaTime));
-
-        // 플레이어가 정지한 경우 회전X
-        if (moveDir.magnitude > 0)
+    public void JumpTo()
+    {
+        if(characterController.isGrounded)
         {
-            // 플레이어를 움직이는 방향으로 회전시킴
-            Quaternion targetRotation = Quaternion.LookRotation(moveDir);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
+            moveDir.y = jumpForce;
         }
     }
 
-    private void PlayerAni()
+    private bool isGropunded()
     {
-        switch (curState)
-        {
-            case PlayerState.Idle:
-                break;
-                animator.SetBool("IsWalk", false);
-                animator.SetBool("IsAttack", false);
-            case PlayerState.Move:
-                animator.SetBool("IsWalk", true);
-                animator.SetBool("IsAttack", false);
-                break;
-            case PlayerState.Attack:
-                animator.SetBool("IsWalk", false);
-                animator.SetBool("IsAttack", true);
-                break;
-        }
-    }
-
-    private IEnumerator FireKunai()
-    {
-        while(true)
-        {
-            isAttack = true;
-            ChangeState(PlayerState.Attack);
-            GameObject kunai = kunaiPoolManager.ActivePoolItem();
-            kunai.transform.position =  kunaiSpawnPoint.position;
-            kunai.transform.rotation =  transform.rotation;
-            kunai.GetComponent<RangedProjectile>().Setup(kunaiPoolManager);
-            kunai.GetComponent<Rigidbody>().velocity = kunaiSpawnPoint.forward * 50;
-            yield return new WaitForSeconds(0.5f);
-            isAttack = false;
-            yield return new WaitForSeconds(rateTimeKunai);
-        }
-    }
-
-    private void ChangeState(PlayerState newState)
-    {
-        curState = newState;
+        Vector3 spherePos = new Vector3(transform.position.x, transform.position.y - groundOffset, transform.position.z);
+        if (Physics.CheckSphere(spherePos, characterController.radius-0.05f, layerGround))
+            return true;
+        return false;
     }
 }
-
